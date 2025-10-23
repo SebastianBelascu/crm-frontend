@@ -3,7 +3,7 @@
 import { useState, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
 
 export interface Column<T> {
   key: keyof T | string;
@@ -21,6 +21,8 @@ interface DataTableProps<T> {
   onCreateClick?: () => void;
   onRowClick?: (item: T) => void;
   searchKeys?: (keyof T)[];
+  loading?: boolean;
+  error?: string | null;
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -32,6 +34,8 @@ export function DataTable<T extends { id: number | string }>({
   onCreateClick,
   onRowClick,
   searchKeys = [],
+  loading = false,
+  error = null,
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -99,53 +103,73 @@ export function DataTable<T extends { id: number | string }>({
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-              <tr>
-                {columns.map((column, index) => (
-                  <th
-                    key={index}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                  >
-                    {column.label}
-                  </th>
-                ))}
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredData.map((item) => (
-                <tr
-                  key={item.id}
-                  onClick={() => onRowClick?.(item)}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                >
-                  {columns.map((column, colIndex) => (
-                    <td
-                      key={colIndex}
-                      className={`px-6 py-4 whitespace-nowrap ${column.className || ''}`}
-                    >
-                      {getCellValue(item, column)}
-                    </td>
-                  ))}
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <ChevronRight className="inline-block h-5 w-5 text-gray-400" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredData.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              {searchQuery ? 'No results found.' : 'No data available.'}
-            </p>
+        {error && (
+          <div className="px-6 py-12 text-center">
+            <p className="text-red-600 dark:text-red-400 font-medium mb-2">Error loading data</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{error}</p>
           </div>
+        )}
+
+        {loading && !error && (
+          <div className="px-6 py-12">
+            <div className="flex items-center justify-center mb-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+            <p className="text-center text-gray-500 dark:text-gray-400">Loading...</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    {columns.map((column, index) => (
+                      <th
+                        key={index}
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        {column.label}
+                      </th>
+                    ))}
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredData.map((item) => (
+                    <tr
+                      key={item.id}
+                      onClick={() => onRowClick?.(item)}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                    >
+                      {columns.map((column, colIndex) => (
+                        <td
+                          key={colIndex}
+                          className={`px-6 py-4 whitespace-nowrap ${column.className || ''}`}
+                        >
+                          {getCellValue(item, column)}
+                        </td>
+                      ))}
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <ChevronRight className="inline-block h-5 w-5 text-gray-400" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredData.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">
+                  {searchQuery ? 'No results found.' : 'No data available.'}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

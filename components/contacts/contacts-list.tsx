@@ -1,41 +1,30 @@
 'use client';
 
-import { useState } from 'react';
 import { DataTable, Column } from '@/components/ui/data-table';
-
-interface Contact {
-  id: number;
-  name: string;
-  organization: string;
-  city: string;
-  phone: string;
-}
-
-const mockContacts: Contact[] = [
-  { id: 1, name: 'John Doe', organization: 'Abernathy Inc', city: 'New York', phone: '555-0123' },
-  { id: 2, name: 'Jane Smith', organization: 'Altenwerth Inc', city: 'Los Angeles', phone: '555-0124' },
-  { id: 3, name: 'Bob Johnson', organization: 'Casper Group', city: 'Chicago', phone: '555-0125' },
-];
+import { useContacts } from '@/app/hooks/use-queries';
+import { Contact } from '@/app/services/api-service';
+import { useRouter } from 'next/navigation';
 
 export function ContactsList() {
-  const [contacts] = useState<Contact[]>(mockContacts);
+  const { data: contacts = [], isLoading: loading, error } = useContacts();
+  const router = useRouter();
 
   const columns: Column<Contact>[] = [
     {
-      key: 'name',
+      key: 'first_name',
       label: 'Name',
       render: (contact) => (
         <div className="text-sm font-medium text-primary dark:text-primary">
-          {contact.name}
+          {contact.first_name} {contact.last_name}
         </div>
       ),
     },
     {
-      key: 'organization',
+      key: 'organization_id',
       label: 'Organization',
       render: (contact) => (
         <div className="text-sm text-gray-900 dark:text-gray-100">
-          {contact.organization}
+          {contact.organization_id}
         </div>
       ),
     },
@@ -60,11 +49,11 @@ export function ContactsList() {
   ];
 
   const handleCreateClick = () => {
-    console.log('Create contact clicked');
+    router.push('/contacts/create');
   };
 
   const handleRowClick = (contact: Contact) => {
-    console.log('Contact clicked:', contact);
+    router.push(`/contacts/${contact.id}`);
   };
 
   return (
@@ -76,7 +65,9 @@ export function ContactsList() {
       createButtonText="Create Contact"
       onCreateClick={handleCreateClick}
       onRowClick={handleRowClick}
-      searchKeys={['name', 'organization', 'city', 'phone']}
+      searchKeys={['first_name', 'last_name', 'city', 'phone']}
+      loading={loading}
+      error={error?.message || null}
     />
   );
 }

@@ -1,28 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import { DataTable, Column } from '@/components/ui/data-table';
-
-interface Organization {
-  id: number;
-  name: string;
-  city: string;
-  phone: string;
-}
-
-const mockOrganizations: Organization[] = [
-  { id: 1, name: 'Abernathy Inc', city: 'New Maxineshire', phone: '877-274-5845' },
-  { id: 2, name: 'Altenwerth Inc', city: 'North Cristal', phone: '866-843-4101' },
-  { id: 3, name: 'Barrows, Mertz and Batz', city: 'South Constanceburgh', phone: '(866) 773-6355' },
-  { id: 4, name: 'Bayer-Satterfield', city: 'West Isabellaport', phone: '800-810-6324' },
-  { id: 5, name: 'Bosco-Dicki', city: 'Cruickshankbury', phone: '(844) 280-6737' },
-  { id: 6, name: 'Breitenberg Ltd', city: 'Bethborough', phone: '(800) 704-6836' },
-  { id: 7, name: 'Casper Group', city: 'Willstad', phone: '855.715.9873' },
-  { id: 8, name: 'Conn, DuBuque and Kerluke', city: 'Lake Alfonsomouthh', phone: '855.205.7175' },
-];
+import { useOrganizations } from '@/app/hooks/use-queries';
+import { Organization } from '@/app/services/api-service';
+import { useRouter } from 'next/navigation';
 
 export function OrganizationsList() {
-  const [organizations] = useState<Organization[]>(mockOrganizations);
+  const { data: organizations = [], isLoading: loading, error } = useOrganizations();
+  const router = useRouter();
 
   const columns: Column<Organization>[] = [
     {
@@ -55,11 +40,11 @@ export function OrganizationsList() {
   ];
 
   const handleCreateClick = () => {
-    console.log('Create organization clicked');
+    router.push('/organizations/create');
   };
 
   const handleRowClick = (org: Organization) => {
-    console.log('Organization clicked:', org);
+    router.push(`/organizations/${org.id}`);
   };
 
   return (
@@ -72,6 +57,8 @@ export function OrganizationsList() {
       onCreateClick={handleCreateClick}
       onRowClick={handleRowClick}
       searchKeys={['name', 'city', 'phone']}
+      loading={loading}
+      error={error?.message || null}
     />
   );
 }

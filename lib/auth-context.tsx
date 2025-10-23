@@ -3,6 +3,7 @@
 import React, {createContext, useContext, useEffect, useState} from 'react';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 
 export interface User {
     id: number;
@@ -48,13 +49,16 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
     }, []);
 
     async function checkAuth() {
-        const token = localStorage.getItem('auth_token');
+        const token = Cookies.get('auth_token');
+        console.log('checkAuth - token from cookie:', token);
         if (token) {
             try {
                 const response = await api.get('/api/restify/profile');
                 setUser(response.data);
+                console.log('checkAuth - user authenticated:', response.data);
             } catch(error) {
-                localStorage.removeItem('auth_token');
+                console.log('checkAuth - profile fetch failed, removing token:', error);
+                Cookies.remove('auth_token');
             }
         }
         setLoading(false);
@@ -65,9 +69,20 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
         setLoading(true);
         try {
             const response = await api.post('/api/login', credentials);
-            const {token, user} = response.data;
+            console.log('Login response:', response.data);
+            const token = response.data.meta?.token;
+            const user = {
+                id: parseInt(response.data.id),
+                name: response.data.attributes.name,
+                email: response.data.attributes.email,
+                email_verified_at: response.data.attributes.email_verified_at,
+                created_at: response.data.attributes.created_at,
+                updated_at: response.data.attributes.updated_at,
+            };
 
-            localStorage.setItem('auth_token', token);
+            console.log('Setting auth_token cookie with token:', token);
+            Cookies.set('auth_token', token, { expires: 7, sameSite: 'lax' });
+            console.log('Cookie set, verifying:', Cookies.get('auth_token'));
             setUser(user);
             router.push('/');
             return user;
@@ -85,9 +100,20 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
         setLoading(true);
         try {
             const response = await api.post('/api/register', credentials);
-            const { token, user} = response.data;
+            console.log('Register response:', response.data);
+            const token = response.data.meta?.token;
+            const user = {
+                id: parseInt(response.data.id),
+                name: response.data.attributes.name,
+                email: response.data.attributes.email,
+                email_verified_at: response.data.attributes.email_verified_at,
+                created_at: response.data.attributes.created_at,
+                updated_at: response.data.attributes.updated_at,
+            };
 
-            localStorage.setItem('auth_token', token);
+            console.log('Setting auth_token cookie with token:', token);
+            Cookies.set('auth_token', token, { expires: 7, sameSite: 'lax' });
+            console.log('Cookie set, verifying:', Cookies.get('auth_token'));
             setUser(user);
             router.push('/');
             return user;
@@ -107,7 +133,7 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
         } catch(error) {
             console.error('Logout failed', error);
         } finally {
-            localStorage.removeItem('auth_token');
+            Cookies.remove('auth_token');
             setUser(null);
             router.push('/login');
         }

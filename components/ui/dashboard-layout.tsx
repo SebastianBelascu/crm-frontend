@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Building2, Users, FileText, User, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeButton } from "@/components/ui/themebutton"
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -62,10 +63,20 @@ interface DashboardLayoutProps {
   children: React.ReactNode
   title?: string
   organization?: string
-  user?: string
 }
 
-export function DashboardLayout({ children, title, organization = "Acme Corporation", user = "John Doe" }: DashboardLayoutProps) {
+export function DashboardLayout({ children, title, organization = "Acme Corporation" }: DashboardLayoutProps) {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const handleProfile = () => {
+    router.push('/profile');
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
       <Sidebar />
@@ -79,15 +90,15 @@ export function DashboardLayout({ children, title, organization = "Acme Corporat
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-                  {user}
+                  {user?.name || 'User'}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleProfile}>
                   <User className="mr-2 h-4 w-4" />
                   <span>My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
                 </DropdownMenuItem>
