@@ -1,5 +1,11 @@
+import { DashboardLayout } from "@/components/ui/dashboard-layout"
+
 export default function Reports() {
-    return <div>
-        <h1>Reports</h1>
-    </div>
+    return (
+        <DashboardLayout title="Reports">
+            <div>
+                <h1>Reports</h1>
+            </div>
+        </DashboardLayout>
+    )
 }
