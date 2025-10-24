@@ -1,19 +1,23 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
+import { useForm, Resolver, DefaultValues, Path } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export interface Field {
-  name: string;
+export interface Field<T> {
+  name: Path<T>;
   label: string;
   type?: 'text' | 'email' | 'tel' | 'select';
-  options?: { value: string; label: string }[];
+  options?: { value: string | number; label: string }[];
   placeholder?: string;
   gridCols?: 1 | 2;
+  valueAsNumber?: boolean;
 }
 
 interface DetailViewProps<T> {
@@ -21,17 +25,18 @@ interface DetailViewProps<T> {
   backLink: string;
   backLinkText: string;
   data?: T | null;
-  fields: Field[];
+  fields: Field<T>[];
   loading?: boolean;
   error?: string | null;
-  onSubmit?: (data: Partial<T>) => Promise<void>;
-  onUpdate?: (data: Partial<T>) => Promise<void>;
+  onSubmit?: (data: T) => Promise<void>;
+  onUpdate?: (data: T) => Promise<void>;
   onDelete?: () => Promise<void>;
   submitButtonText?: string;
   updateButtonText?: string;
   deleteButtonText?: string;
   isCreateMode?: boolean;
   children?: ReactNode;
+  validationSchema?: z.ZodType<T>;
 }
 
 export function DetailView<T extends Record<string, any>>({
@@ -50,45 +55,42 @@ export function DetailView<T extends Record<string, any>>({
   deleteButtonText = 'Delete',
   isCreateMode = false,
   children,
+  validationSchema,
 }: DetailViewProps<T>) {
-  const [formData, setFormData] = useState<Partial<T>>(data || {});
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setValue,
+  } = useForm<T>({
+    resolver: validationSchema ? (zodResolver(validationSchema) as Resolver<T>) : undefined,
+    defaultValues: (data || {}) as DefaultValues<T>,
+  });
 
   useEffect(() => {
     if (data) {
-      setFormData(data);
+      reset(data);
     }
-  }, [data]);
+  }, [data, reset]);
 
-  const handleChange = (name: string, value: string) => {
-    const finalValue = name.endsWith('_id') && value ? parseInt(value) : value;
-    setFormData((prev) => ({ ...prev, [name]: finalValue }));
-  };
-
-  const handleSubmit = async () => {
+  const onFormSubmit = async (formData: T) => {
     const handler = isCreateMode ? onSubmit : onUpdate;
     if (!handler) return;
-    setIsUpdating(true);
     try {
       await handler(formData);
     } catch (err) {
       console.error('Submit failed:', err);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleDelete = async () => {
     if (!onDelete) return;
     if (!confirm('Are you sure you want to delete this item?')) return;
-    setIsDeleting(true);
     try {
       await onDelete();
     } catch (err) {
       console.error('Delete failed:', err);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -127,77 +129,88 @@ export function DetailView<T extends Record<string, any>>({
         <span className="text-gray-900 dark:text-gray-100 font-medium">{title}</span>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {fields.map((field) => (
-            <div
-              key={field.name}
-              className={field.gridCols === 1 ? 'md:col-span-2' : 'md:col-span-1'}
-            >
-              <Label htmlFor={field.name} className="mb-2 block">
-                {field.label}
-              </Label>
-              {field.type === 'select' && field.options ? (
-                <select
-                  id={field.name}
-                  value={formData[field.name]?.toString() || ''}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {field.options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  id={field.name}
-                  type={field.type || 'text'}
-                  value={(formData[field.name] as string) || ''}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  placeholder={field.placeholder}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+      <form onSubmit={handleFormSubmit(onFormSubmit)}>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {fields.map((field) => (
+              <div
+                key={field.name}
+                className={field.gridCols === 1 ? 'md:col-span-2' : 'md:col-span-1'}
+              >
+                <Label htmlFor={field.name} className="mb-2 block">
+                  {field.label}
+                </Label>
+                {field.type === 'select' && field.options ? (
+                  <>
+                    <select
+                      id={field.name}
+                      {...register(field.name, {
+                        valueAsNumber: field.valueAsNumber,
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      {field.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors[field.name] && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors[field.name]?.message as string}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      id={field.name}
+                      type={field.type || 'text'}
+                      {...register(field.name)}
+                      placeholder={field.placeholder}
+                      className={errors[field.name] ? 'border-red-500' : ''}
+                    />
+                    {errors[field.name] && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors[field.name]?.message as string}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
 
-        <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-          {onDelete && !isCreateMode && (
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting || isUpdating}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                deleteButtonText
-              )}
-            </Button>
-          )}
-          {(onSubmit || onUpdate) && (
-            <Button
-              onClick={handleSubmit}
-              disabled={isUpdating || isDeleting}
-              className="ml-auto"
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isCreateMode ? 'Creating...' : 'Updating...'}
-                </>
-              ) : (
-                isCreateMode ? submitButtonText : updateButtonText
-              )}
-            </Button>
-          )}
+          <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            {onDelete && !isCreateMode && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isSubmitting}
+              >
+                {deleteButtonText}
+              </Button>
+            )}
+            {(onSubmit || onUpdate) && (
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="ml-auto"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isCreateMode ? 'Creating...' : 'Updating...'}
+                  </>
+                ) : (
+                  isCreateMode ? submitButtonText : updateButtonText
+                )}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </form>
 
       {children}
     </div>

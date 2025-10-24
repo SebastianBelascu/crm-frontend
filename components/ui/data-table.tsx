@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronRight, Loader2 } from 'lucide-react';
@@ -23,6 +23,8 @@ interface DataTableProps<T> {
   searchKeys?: (keyof T)[];
   loading?: boolean;
   error?: string | null;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -36,21 +38,15 @@ export function DataTable<T extends { id: number | string }>({
   searchKeys = [],
   loading = false,
   error = null,
+  searchQuery = '',
+  onSearchChange,
 }: DataTableProps<T>) {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredData = data.filter((item) => {
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return searchKeys.some((key) => {
-      const value = item[key];
-      return value?.toString().toLowerCase().includes(query);
-    });
-  });
-
   const handleReset = () => {
-    setSearchQuery('');
+    onSearchChange?.('');
+  };
+
+  const handleSearchChange = (value: string) => {
+    onSearchChange?.(value);
   };
 
   const getCellValue = (item: T, column: Column<T>) => {
@@ -87,7 +83,7 @@ export function DataTable<T extends { id: number | string }>({
               type="text"
               placeholder={searchPlaceholder}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full"
             />
           </div>
@@ -139,7 +135,7 @@ export function DataTable<T extends { id: number | string }>({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredData.map((item) => (
+                  {data.map((item) => (
                     <tr
                       key={item.id}
                       onClick={() => onRowClick?.(item)}
@@ -162,7 +158,7 @@ export function DataTable<T extends { id: number | string }>({
               </table>
             </div>
 
-            {filteredData.length === 0 && (
+            {data.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-500 dark:text-gray-400">
                   {searchQuery ? 'No results found.' : 'No data available.'}

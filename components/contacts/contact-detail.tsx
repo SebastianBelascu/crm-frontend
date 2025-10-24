@@ -3,6 +3,7 @@
 import { DetailView, Field } from '@/components/ui/detail-view';
 import { useContact, useUpdateContact, useDeleteContact, useOrganizations } from '@/app/hooks/use-queries';
 import { Contact } from '@/app/services/api-service';
+import { contactSchema } from '@/lib/validations';
 import { useMemo } from 'react';
 
 interface ContactDetailProps {
@@ -76,6 +77,7 @@ export function ContactDetail({ id }: ContactDetailProps) {
       onDelete={handleDelete}
       updateButtonText="Update Contact"
       deleteButtonText="Delete Contact"
+      validationSchema={contactSchema}
     />
   );
 }

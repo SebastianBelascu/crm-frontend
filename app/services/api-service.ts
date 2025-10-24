@@ -1,8 +1,8 @@
 import api from '@/lib/axios';
 
 class ApiService {
-  async getAll<T>(endpoint: string): Promise<T[]> {
-    const response = await api.get(endpoint);
+  async getAll<T>(endpoint: string, params?: Record<string, any>): Promise<T[]> {
+    const response = await api.get(endpoint, { params });
     if (Array.isArray(response.data.data)) {
       return response.data.data.map((item: any) => ({
         id: parseInt(item.id),
@@ -65,8 +65,9 @@ export interface Organization {
 class OrganizationsService extends ApiService {
   private endpoint = '/api/restify/organizations';
 
-  getOrganizations() {
-    return this.getAll<Organization>(this.endpoint);
+  getOrganizations(search?: string) {
+    const params = search ? { search } : undefined;
+    return this.getAll<Organization>(this.endpoint, params);
   }
 
   getOrganization(id: number) {
@@ -103,8 +104,9 @@ export interface Contact {
 class ContactsService extends ApiService {
   private endpoint = '/api/restify/contacts';
 
-  getContacts() {
-    return this.getAll<Contact>(this.endpoint);
+  getContacts(search?: string) {
+    const params = search ? { search } : undefined;
+    return this.getAll<Contact>(this.endpoint, params);
   }
 
   getContact(id: number) {

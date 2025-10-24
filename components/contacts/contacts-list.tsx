@@ -1,12 +1,16 @@
 'use client';
 
+import { useState } from 'react';
+import { useDebounce } from 'use-debounce';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { useContacts } from '@/app/hooks/use-queries';
 import { Contact } from '@/app/services/api-service';
 import { useRouter } from 'next/navigation';
 
 export function ContactsList() {
-  const { data: contacts = [], isLoading: loading, error } = useContacts();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch] = useDebounce(searchQuery, 500);
+  const { data: contacts = [], isLoading: loading, error } = useContacts(debouncedSearch);
   const router = useRouter();
 
   const columns: Column<Contact>[] = [
@@ -68,6 +72,8 @@ export function ContactsList() {
       searchKeys={['first_name', 'last_name', 'city', 'phone']}
       loading={loading}
       error={error?.message || null}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
     />
   );
 }

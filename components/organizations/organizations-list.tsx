@@ -1,12 +1,16 @@
 'use client';
 
+import { useState } from 'react';
+import { useDebounce } from 'use-debounce';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { useOrganizations } from '@/app/hooks/use-queries';
 import { Organization } from '@/app/services/api-service';
 import { useRouter } from 'next/navigation';
 
 export function OrganizationsList() {
-  const { data: organizations = [], isLoading: loading, error } = useOrganizations();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch] = useDebounce(searchQuery, 500);
+  const { data: organizations = [], isLoading: loading, error } = useOrganizations(debouncedSearch);
   const router = useRouter();
 
   const columns: Column<Organization>[] = [
@@ -59,6 +63,8 @@ export function OrganizationsList() {
       searchKeys={['name', 'city', 'phone']}
       loading={loading}
       error={error?.message || null}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
     />
   );
 }

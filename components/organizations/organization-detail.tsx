@@ -3,6 +3,7 @@
 import { DetailView, Field } from '@/components/ui/detail-view';
 import { useOrganization, useUpdateOrganization, useDeleteOrganization } from '@/app/hooks/use-queries';
 import { Organization } from '@/app/services/api-service';
+import { organizationSchema } from '@/lib/validations';
 import { RelatedContactsTable } from '@/components/ui/related-tables';
 
 interface OrganizationDetailProps {
@@ -61,6 +62,7 @@ export function OrganizationDetail({ id }: OrganizationDetailProps) {
       onDelete={handleDelete}
       updateButtonText="Update Organization"
       deleteButtonText="Delete Organization"
+      validationSchema={organizationSchema}
     >
       <RelatedContactsTable organizationId={id} />
     </DetailView>

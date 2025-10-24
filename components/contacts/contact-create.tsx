@@ -3,6 +3,7 @@
 import { DetailView, Field } from '@/components/ui/detail-view';
 import { useCreateContact, useOrganizations } from '@/app/hooks/use-queries';
 import { Contact } from '@/app/services/api-service';
+import { contactSchema } from '@/lib/validations';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
@@ -11,7 +12,7 @@ export function ContactCreate() {
   const { data: organizations = [] } = useOrganizations();
   const router = useRouter();
 
-  const contactFields: Field[] = useMemo(() => [
+  const contactFields: Field<Omit<Contact, 'id'>>[] = useMemo(() => [
     { name: 'first_name', label: 'First Name:', type: 'text' },
     { name: 'last_name', label: 'Last Name:', type: 'text' },
     { name: 'email', label: 'Email:', type: 'email' },
@@ -21,6 +22,7 @@ export function ContactCreate() {
       label: 'Organization:', 
       type: 'select',
       gridCols: 2,
+      valueAsNumber: true,
       options: [
         { value: '', label: 'Select an organization' },
         ...organizations.map(org => ({
@@ -51,13 +53,13 @@ export function ContactCreate() {
     { name: 'postal_code', label: 'Postal code:', type: 'text' },
   ], [organizations]);
 
-  const handleCreate = async (data: Partial<Contact>) => {
+  const handleCreate = async (data: Omit<Contact, 'id'>) => {
     await createMutation.mutateAsync(data);
     router.push('/contacts');
   };
 
   return (
-    <DetailView<Contact>
+    <DetailView<Omit<Contact, 'id'>>
       title="Create Contact"
       backLink="/contacts"
       backLinkText="Contacts"
@@ -65,6 +67,7 @@ export function ContactCreate() {
       onSubmit={handleCreate}
       submitButtonText="Create Contact"
       isCreateMode={true}
+      validationSchema={contactSchema}
     />
   );
 }

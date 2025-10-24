@@ -3,6 +3,7 @@
 import { DetailView, Field } from '@/components/ui/detail-view';
 import { useCreateOrganization } from '@/app/hooks/use-queries';
 import { Organization } from '@/app/services/api-service';
+import { organizationSchema } from '@/lib/validations';
 import { useRouter } from 'next/navigation';
 
 const organizationFields: Field[] = [
@@ -49,6 +50,7 @@ export function OrganizationCreate() {
       onSubmit={handleCreate}
       submitButtonText="Create Organization"
       isCreateMode={true}
+      validationSchema={organizationSchema}
     />
   );
 }

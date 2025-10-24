@@ -12,6 +12,7 @@ export interface User {
     email_verified_at?: string | null;
     created_at: string;
     updated_at: string;
+    avatar?: string | null;
 }
 
 export interface LoginCredentials {
@@ -54,8 +55,17 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
         if (token) {
             try {
                 const response = await api.get('/api/restify/profile');
-                setUser(response.data);
-                console.log('checkAuth - user authenticated:', response.data);
+                const user = {
+                    id: parseInt(response.data.data.id),
+                    name: response.data.data.attributes.name,
+                    email: response.data.data.attributes.email,
+                    email_verified_at: response.data.data.attributes.email_verified_at,
+                    created_at: response.data.data.attributes.created_at,
+                    updated_at: response.data.data.attributes.updated_at,
+                    avatar: response.data.data.attributes.avatar,
+                };
+                setUser(user);
+                console.log('checkAuth - user authenticated:', user);
             } catch(error) {
                 console.log('checkAuth - profile fetch failed, removing token:', error);
                 Cookies.remove('auth_token');
@@ -78,6 +88,7 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
                 email_verified_at: response.data.attributes.email_verified_at,
                 created_at: response.data.attributes.created_at,
                 updated_at: response.data.attributes.updated_at,
+                avatar: response.data.attributes.avatar,
             };
 
             console.log('Setting auth_token cookie with token:', token);
@@ -109,6 +120,7 @@ export function AuthProvider( {children} : {children: React.ReactNode}) {
                 email_verified_at: response.data.attributes.email_verified_at,
                 created_at: response.data.attributes.created_at,
                 updated_at: response.data.attributes.updated_at,
+                avatar: response.data.attributes.avatar,
             };
 
             console.log('Setting auth_token cookie with token:', token);
