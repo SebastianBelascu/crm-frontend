@@ -1,15 +1,29 @@
 import api from '@/lib/axios';
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta?: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
 class ApiService {
-  async getAll<T>(endpoint: string, params?: Record<string, any>): Promise<T[]> {
+  async getAll<T>(endpoint: string, params?: Record<string, any>): Promise<PaginatedResponse<T>> {
     const response = await api.get(endpoint, { params });
     if (Array.isArray(response.data.data)) {
-      return response.data.data.map((item: any) => ({
+      const data = response.data.data.map((item: any) => ({
         id: parseInt(item.id),
         ...item.attributes
       }));
+      return {
+        data,
+        meta: response.data.meta
+      };
     }
-    return response.data;
+    return { data: response.data };
   }
 
   async getById<T>(endpoint: string, id: number | string): Promise<T> {
@@ -65,9 +79,14 @@ export interface Organization {
 class OrganizationsService extends ApiService {
   private endpoint = '/api/restify/organizations';
 
-  getOrganizations(search?: string) {
-    const params = search ? { search } : undefined;
-    return this.getAll<Organization>(this.endpoint, params);
+  async getOrganizations(search?: string, city?: string, sort?: string, page?: number, perPage?: number): Promise<PaginatedResponse<Organization>> {
+    const params: Record<string, any> = {};
+    if (search) params.search = search;
+    if (city) params.city = city;
+    if (sort) params.sort = sort;
+    if (page) params.page = page;
+    if (perPage) params.perPage = perPage;
+    return this.getAll<Organization>(this.endpoint, Object.keys(params).length > 0 ? params : undefined);
   }
 
   getOrganization(id: number) {
@@ -104,9 +123,14 @@ export interface Contact {
 class ContactsService extends ApiService {
   private endpoint = '/api/restify/contacts';
 
-  getContacts(search?: string) {
-    const params = search ? { search } : undefined;
-    return this.getAll<Contact>(this.endpoint, params);
+  async getContacts(search?: string, city?: string, sort?: string, page?: number, perPage?: number): Promise<PaginatedResponse<Contact>> {
+    const params: Record<string, any> = {};
+    if (search) params.search = search;
+    if (city) params.city = city;
+    if (sort) params.sort = sort;
+    if (page) params.page = page;
+    if (perPage) params.perPage = perPage;
+    return this.getAll<Contact>(this.endpoint, Object.keys(params).length > 0 ? params : undefined);
   }
 
   getContact(id: number) {

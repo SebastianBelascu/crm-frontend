@@ -4,10 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { organizationsService, contactsService, Organization, Contact } from '@/app/services/api-service';
 import { useRouter } from 'next/navigation';
 
-export function useOrganizations(search?: string) {
+export function useOrganizations(search?: string, city?: string, sort?: string, page?: number, perPage?: number) {
   return useQuery({
-    queryKey: ['organizations', search],
-    queryFn: () => organizationsService.getOrganizations(search),
+    queryKey: ['organizations', search, city, sort, page, perPage],
+    queryFn: () => organizationsService.getOrganizations(search, city, sort, page, perPage),
   });
 }
 
@@ -56,10 +56,10 @@ export function useCreateOrganization() {
   });
 }
 
-export function useContacts(search?: string) {
+export function useContacts(search?: string, city?: string, sort?: string, page?: number, perPage?: number) {
   return useQuery({
-    queryKey: ['contacts', search],
-    queryFn: () => contactsService.getContacts(search),
+    queryKey: ['contacts', search, city, sort, page, perPage],
+    queryFn: () => contactsService.getContacts(search, city, sort, page, perPage),
   });
 }
 

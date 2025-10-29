@@ -8,8 +8,9 @@ interface RelatedContactsTableProps {
 }
 
 export function RelatedContactsTable({ organizationId }: RelatedContactsTableProps) {
-  const { data: allContacts = [], isLoading, error } = useContacts();
-  
+  const { data: response, isLoading, error } = useContacts(undefined, undefined, undefined, 1, 10000);
+  const allContacts = response?.data || [];
+
   // Filter contacts by organization_id
   const relatedContacts = allContacts.filter(
     contact => contact.organization_id === organizationId

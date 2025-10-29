@@ -12,7 +12,8 @@ interface ContactDetailProps {
 
 export function ContactDetail({ id }: ContactDetailProps) {
   const { data: contact, isLoading, error } = useContact(id);
-  const { data: organizations = [] } = useOrganizations();
+  const { data: orgResponse } = useOrganizations(undefined, undefined, undefined, 1, 10000);
+  const organizations = orgResponse?.data || [];
   const updateMutation = useUpdateContact();
   const deleteMutation = useDeleteContact();
 

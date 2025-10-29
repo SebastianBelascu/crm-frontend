@@ -31,6 +31,7 @@ interface DetailViewProps<T> {
   onSubmit?: (data: T) => Promise<void>;
   onUpdate?: (data: T) => Promise<void>;
   onDelete?: () => Promise<void>;
+  onCancel?: () => void;
   submitButtonText?: string;
   updateButtonText?: string;
   deleteButtonText?: string;
@@ -50,6 +51,7 @@ export function DetailView<T extends Record<string, any>>({
   onSubmit,
   onUpdate,
   onDelete,
+  onCancel,
   submitButtonText = 'Create',
   updateButtonText = 'Update',
   deleteButtonText = 'Delete',
@@ -120,18 +122,18 @@ export function DetailView<T extends Record<string, any>>({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
         <Link href={backLink} className="hover:text-primary">
           {backLinkText}
         </Link>
         <span>/</span>
-        <span className="text-gray-900 dark:text-gray-100 font-medium">{title}</span>
+        <span className="text-gray-900 dark:text-gray-100 font-medium truncate">{title}</span>
       </div>
 
       <form onSubmit={handleFormSubmit(onFormSubmit)}>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {fields.map((field) => (
               <div
                 key={field.name}
@@ -181,33 +183,47 @@ export function DetailView<T extends Record<string, any>>({
             ))}
           </div>
 
-          <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             {onDelete && !isCreateMode && (
               <Button
                 type="button"
                 variant="destructive"
                 onClick={handleDelete}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto order-3 sm:order-1"
               >
                 {deleteButtonText}
               </Button>
             )}
-            {(onSubmit || onUpdate) && (
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="ml-auto"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isCreateMode ? 'Creating...' : 'Updating...'}
-                  </>
-                ) : (
-                  isCreateMode ? submitButtonText : updateButtonText
-                )}
-              </Button>
-            )}
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:ml-auto order-1 sm:order-2">
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+              )}
+              {(onSubmit || onUpdate) && (
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isCreateMode ? 'Creating...' : 'Updating...'}
+                    </>
+                  ) : (
+                    isCreateMode ? submitButtonText : updateButtonText
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </form>

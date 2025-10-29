@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { useOrganizations } from '@/app/hooks/use-queries';
@@ -9,9 +9,36 @@ import { useRouter } from 'next/navigation';
 
 export function OrganizationsList() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
   const [debouncedSearch] = useDebounce(searchQuery, 500);
-  const { data: organizations = [], isLoading: loading, error } = useOrganizations(debouncedSearch);
+  
+  // Fetch filtered organizations
+  const { data: response, isLoading: loading, error } = useOrganizations(debouncedSearch, cityFilter, sortBy, currentPage, perPage);
+  const organizations = response?.data || [];
+  const meta = response?.meta;
+  
+  // Fetch all organizations for filter options (without filters, with high perPage to get all)
+  const { data: allResponse } = useOrganizations(undefined, undefined, undefined, 1, 10000);
+  const allOrganizations = allResponse?.data || [];
+  
   const router = useRouter();
+
+  // Get unique cities from ALL organizations for filter options
+  const cityOptions = useMemo(() => {
+    const cities = allOrganizations
+      .map((org: Organization) => org.city)
+      .filter((city: string, index: number, self: string[]) => city && self.indexOf(city) === index)
+      .sort();
+    return cities.map((city: string) => ({ label: city, value: city }));
+  }, [allOrganizations]);
+
+  const sortOptions = [
+    { label: 'Name (A-Z)', value: 'name' },
+    { label: 'Name (Z-A)', value: '-name' },
+  ];
 
   const columns: Column<Organization>[] = [
     {
@@ -65,6 +92,21 @@ export function OrganizationsList() {
       error={error?.message || null}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
+      filterOptions={cityOptions}
+      selectedFilter={cityFilter}
+      onFilterChange={setCityFilter}
+      filterLabel="Filter by City"
+      sortBy={sortBy}
+      onSortChange={setSortBy}
+      sortOptions={sortOptions}
+      currentPage={meta?.current_page || 1}
+      totalPages={meta?.last_page || 1}
+      perPage={perPage}
+      onPageChange={setCurrentPage}
+      onPerPageChange={(newPerPage) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1);
+      }}
     />
   );
 }

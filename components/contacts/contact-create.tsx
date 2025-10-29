@@ -9,7 +9,8 @@ import { useMemo } from 'react';
 
 export function ContactCreate() {
   const createMutation = useCreateContact();
-  const { data: organizations = [] } = useOrganizations();
+  const { data: orgResponse } = useOrganizations(undefined, undefined, undefined, 1, 10000);
+  const organizations = orgResponse?.data || [];
   const router = useRouter();
 
   const contactFields: Field<Omit<Contact, 'id'>>[] = useMemo(() => [
